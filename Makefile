@@ -9,7 +9,7 @@ job.name=wc.WordCount
 local.input=input
 local.output=output
 # Pseudo-Cluster Execution
-hdfs.user.name=joe
+hdfs.user.name=$(shell whoami)
 hdfs.input=input
 hdfs.output=output
 # AWS EMR Execution
@@ -40,21 +40,27 @@ clean-local-output:
 local: jar clean-local-output
 	${hadoop.root}/bin/hadoop jar ${jar.path} ${job.name} ${local.input} ${local.output}
 
-# Start HDFS
+# Start HDFS (uses `hdfs --daemon` so no SSH is required).
 start-hdfs:
-	${hadoop.root}/sbin/start-dfs.sh
+	${hadoop.root}/bin/hdfs --daemon start namenode
+	${hadoop.root}/bin/hdfs --daemon start datanode
+	${hadoop.root}/bin/hdfs --daemon start secondarynamenode
 
-# Stop HDFS
-stop-hdfs: 
-	${hadoop.root}/sbin/stop-dfs.sh
-	
-# Start YARN
+# Stop HDFS (ignore errors so it's safe to call when daemons aren't running).
+stop-hdfs:
+	-${hadoop.root}/bin/hdfs --daemon stop secondarynamenode
+	-${hadoop.root}/bin/hdfs --daemon stop datanode
+	-${hadoop.root}/bin/hdfs --daemon stop namenode
+
+# Start YARN.
 start-yarn: stop-yarn
-	${hadoop.root}/sbin/start-yarn.sh
+	${hadoop.root}/bin/yarn --daemon start resourcemanager
+	${hadoop.root}/bin/yarn --daemon start nodemanager
 
-# Stop YARN
+# Stop YARN.
 stop-yarn:
-	${hadoop.root}/sbin/stop-yarn.sh
+	-${hadoop.root}/bin/yarn --daemon stop nodemanager
+	-${hadoop.root}/bin/yarn --daemon stop resourcemanager
 
 # Reformats & initializes HDFS.
 format-hdfs: stop-hdfs
