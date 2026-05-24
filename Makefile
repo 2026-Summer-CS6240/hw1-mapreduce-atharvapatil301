@@ -15,7 +15,7 @@ hdfs.output=output
 # AWS EMR Execution
 aws.emr.release=emr-6.10.0
 aws.region=us-east-1
-aws.bucket.name=cs6240-demo-bucket
+aws.bucket.name=cs6240-mr-atharvapatil301
 aws.subnet.id=subnet-6356553a
 aws.input=input
 aws.output=output
@@ -132,7 +132,9 @@ aws: jar upload-app-aws delete-output-aws
 # Download output from S3.
 download-output-aws: clean-local-output
 	mkdir ${local.output}
+	mkdir log_aws
 	aws s3 sync s3://${aws.bucket.name}/${aws.output} ${local.output}
+	aws s3 sync s3://${aws.bucket.name}/${aws.log.dir} log_aws
 
 # Change to standalone mode.
 switch-standalone:
